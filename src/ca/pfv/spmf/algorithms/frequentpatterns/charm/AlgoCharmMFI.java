@@ -68,7 +68,7 @@ public class AlgoCharmMFI {
 	BufferedWriter writer = null; 
 	
 	/** if true, transaction identifiers of each pattern will be shown*/
-	boolean showTransactionIdentifiers = false;
+	boolean showTransactionIdentifiers = true;
 	
 	/**
 	 * Default constructor

@@ -35,10 +35,13 @@ public class Main {
 
     static public void main(String[] args) throws IOException {
 
-        String inputDir = "/Users/user/Working/INTIMALS/softs-gitlab/freqt/input-ASTs/jhotdraw/jhotdraw-folds/fold4";
+
+        String inputDir = "/Users/user/Working/INTIMALS/softs-gitlab/freqt/input-ASTs/synthetic-data/4files";
+        //String inputDir = "/Users/user/Working/INTIMALS/softs-gitlab/freqt/input-ASTs/jhotdraw/jhotdraw-folds/fold4";
+        //String inputDir = "/Users/user/Working/INTIMALS/softs-gitlab/freqt/input-ASTs/checkstyle/checkstyle-original";
         String inputBlackLabel="conf/java/listWhiteLabel.txt";
-        double minsup = 0.1;
-        int minsize = 5;
+        double minsup = 0.3;
+        int minsize = 2;
 
         ItemsetMiner miner = new ItemsetMiner(inputDir, inputBlackLabel, minsup, minsize);
         miner.run();

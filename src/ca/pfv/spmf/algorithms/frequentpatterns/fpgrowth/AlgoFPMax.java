@@ -19,13 +19,7 @@
 
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import ca.pfv.spmf.patterns.itemset_array_integers_with_count.Itemset;
@@ -63,6 +57,9 @@ public class AlgoFPMax {
     private int minsize;
     //store a mapping of item id and its string
     private Map<String,String> itemString = new HashMap<>();
+    //store transaction database to find tids of itemset
+	private List<List<Integer>> transactionDatabase = new LinkedList<>();
+
 
 	// parameter
 	public int minSupportRelative;// the relative minimum support
@@ -184,13 +181,17 @@ public class AlgoFPMax {
 			List<Integer> transaction = new ArrayList<Integer>();
 			
 			// for each item in the transaction
+			List<Integer> trans = new LinkedList<>();
 			for(String itemString : lineSplited){  
 				Integer item = Integer.parseInt(itemString);
+				trans.add(item);
 				// only add items that have the minimum support
 				if(originalMapSupport.get(item) >= minSupportRelative){
 					transaction.add(item);	
 				}
 			}
+			//store transaction
+			transactionDatabase.add(trans);
 			// sort item in the transaction by descending order of support
 			Collections.sort(transaction, comparatorOriginalOrder);
 			// add the sorted transaction to the fptree.
@@ -201,11 +202,6 @@ public class AlgoFPMax {
 		
 		// We create the header table for the tree using the calculated support of single items
 		tree.createHeaderList(originalMapSupport);
-
-//
-//		for(Map.Entry<String,String> entry: itemString.entrySet()){
-//			System.out.println(entry.getKey()+":"+entry.getValue());
-//		}
 
 //		System.out.println(tree);
 		
@@ -289,7 +285,7 @@ public class AlgoFPMax {
 		// Case 1: the FPtree contains a single path
 		if(singlePath && singlePathSupport >= minSupportRelative){	
 			// We save the path, because it is a maximal itemset
-            if(position > minsize)
+            if(position >= minsize)
                 saveItemset(itemsetBuffer, position, singlePathSupport);
 		}else {
 			// Case 2: There are multiple paths.
@@ -413,7 +409,7 @@ public class AlgoFPMax {
 					Collections.sort(temp, comparatorOriginalOrder);
 					// if beta pass the test, we save it
 					if(mfiTree.passSubsetChecking(temp)) {
-					    if(prefixLength+1 > minsize)
+					    if(prefixLength+1 >= minsize)
 					        saveItemset(prefix, prefixLength+1, betaSupport);
 					}
 					//===========================================================
@@ -458,22 +454,26 @@ public class AlgoFPMax {
 			// Create a string buffer
 			StringBuilder buffer = new StringBuilder();
 
+			List<Integer> itemTemp = new LinkedList<>();
 			// write the items of the itemset
 			for(int i=0; i< itemsetLength; i++){
+				itemTemp.add(itemsetCopy[i]);
 				//buffer.append(itemsetCopy[i]);
-				//String t = itemString.get(String.valueOf(itemsetCopy[i]));
-				//System.out.println(t);
                 buffer.append(itemString.get(String.valueOf(itemsetCopy[i])));
 				if(i != itemsetLength-1){
 					buffer.append(' ');
 				}
 			}
+
 			// Then, write the support
 			buffer.append(" #SUP: ");
 			buffer.append(support);
-			// write to file and create a new line
-			//System.out.println(buffer.toString());
 
+			//write Tids
+			buffer.append(" #Tids: ");
+			buffer.append(findTids(itemTemp));
+
+			// write to file and create a new line
 			writer.write(buffer.toString());
 			writer.newLine();
 
@@ -488,7 +488,26 @@ public class AlgoFPMax {
 			patterns.addItemset(itemsetObj, itemsetLength);
 		}
 	}
-	
+
+	//find tids of an itemset
+	private String findTids(List<Integer> itemset){
+		//find tids
+		List<Integer> tids = new LinkedList<>();
+		for(int i=0; i<transactionDatabase.size(); ++i){
+			if(transactionDatabase.get(i).containsAll(itemset))
+				tids.add(i);
+		}
+		//transform to string format
+		String tidsString="";
+		for(int i=0; i<tids.size(); ++i) {
+			tidsString += tids.get(i);
+			if(i != tids.size()-1)
+				tidsString += ",";
+		}
+		//return string of tids
+		return tidsString;
+	}
+
 	/**
 	 * Sort an array of items according to the total order of support
 	 * This has an average performance of O(n^2)

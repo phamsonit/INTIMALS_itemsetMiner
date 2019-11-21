@@ -94,7 +94,7 @@ public class AlgoEclat {
 	private int[] itemsetBuffer = null;
 	
 	/** if true, transaction identifiers of each pattern will be shown*/
-	boolean showTransactionIdentifiers = false;
+	boolean showTransactionIdentifiers = true;
 	
 	/** Special parameter to set the maximum size of itemsets to be discovered */
 	int maxItemsetSize = Integer.MAX_VALUE;

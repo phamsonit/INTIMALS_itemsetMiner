@@ -2,6 +2,7 @@ package be.intimals.ItemsetMiner.structure;
 
 public class NodeFreqT { //can extends from Node of Ekeko ???
 
+    private int ID;
     private String node_label;
     private int node_label_int;
     private String lineNr;
@@ -29,6 +30,14 @@ public class NodeFreqT { //can extends from Node of Ekeko ???
         sibling = _sibling;
         degree = _degree;
         ordered = _ordered;
+    }
+
+    public void setID(int id){
+        this.ID = id;
+    }
+
+    public int getID(){
+        return this.ID;
     }
 
     public void setNode_label_int(int node_label_int) {
