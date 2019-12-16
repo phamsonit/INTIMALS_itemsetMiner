@@ -22,20 +22,80 @@ public class ItemsetMiner {
     private Map<String, Set<String>> whiteLabels = new HashMap<>();
 
     private String inputDir;
+    private String outputDir;
     private String inputBlackLabel;
     private double minsupp;
     private int minsize;
 
-    private Map<String, Projected> pathLocations = new LinkedHashMap<>();
-
-
-
     ///////////////////
-    public ItemsetMiner(String _inputDir, String _inputBlackLabel, double _minsupp, int _minsize) {
+    public ItemsetMiner(String _inputDir, String _outputDir, String _inputBlackLabel, double _minsupp, int _minsize) {
         inputDir = _inputDir;
+        outputDir = _outputDir;
         inputBlackLabel = _inputBlackLabel;
         minsupp = _minsupp;
         minsize = _minsize;
+    }
+
+    //create sequence database
+    private void createSequenceDatabase(String output){
+        try{
+            //create output file
+            FileWriter out = new FileWriter(output);
+
+            //create transaction database
+            List<String> itemIndex = new LinkedList<>();
+            List<List<Integer>> database = new LinkedList<>();
+
+            for(int i=0; i<transaction.size(); ++i){
+                List<Integer> trans = new LinkedList<>();
+                for(int j=0; j<transaction.get(i).size(); ++j){
+                    //if this is a leaf node
+                    if(transaction.get(i).get(j).getNode_label_int() < 0) {
+                        //find path from leaf to root
+                        String item = String.valueOf(transaction.get(i).get(j).getNode_label_int());
+                        NodeFreqT currentNode = transaction.get(i).get(j);
+                        while(currentNode.getNodeParent() != -1){
+                            int parentPos = currentNode.getNodeParent();
+                            currentNode = transaction.get(i).get(parentPos);
+                            item = item + "," + String.valueOf(currentNode.getNode_label_int());
+                        }
+                        //add path to itemIndex
+                        if(!itemIndex.contains(item))
+                            itemIndex.add(item);
+                        //add path id to transaction
+                        //if(!trans.contains(itemIndex.indexOf(item)))
+                            trans.add(itemIndex.indexOf(item));
+                    }
+
+                }
+                //add transaction to transaction database
+                database.add(trans);
+            }
+
+            //write header information: if using sequence pattern mining in spmf software
+            for(int i=0; i< itemIndex.size(); ++i){
+                out.write("@ITEM"+uniChar+i+uniChar+toStringLabels(itemIndex.get(i))+"\n");
+                //out.write("@ITEM"+"="+i+"="+toStringLabels(itemIndex.get(i))+"\n");
+            }
+            //out.write("@ITEM=-1=|\n");
+
+            //write sequence database to file
+            for(List<Integer> list : database){
+                for(int i = 0; i< list.size(); ++i) {
+                    out.write(String.valueOf(list.get(i)));
+                    if(i != list.size()-1)
+                        out.write(" ");
+//                    else
+//                        out.write(" -2");
+                }
+                out.write("\n");
+            }
+            //close file
+            out.flush();
+            out.close();
+        }catch (Exception e){
+            System.out.println("error create transaction database "+e);
+        }
     }
 
     //create transaction database
@@ -44,7 +104,7 @@ public class ItemsetMiner {
             //create output file
             FileWriter out = new FileWriter(output);
 
-            //create itemset database
+            //create transaction database
             List<String> itemIndex = new LinkedList<>();
             List<List<Integer>> database = new LinkedList<>();
 
@@ -67,18 +127,6 @@ public class ItemsetMiner {
                         //add path id to transaction
                         if(!trans.contains(itemIndex.indexOf(item)))
                             trans.add(itemIndex.indexOf(item));
-
-                        //find locations of leaf of item
-                        String itemString = toStringLabels(item);
-                        if(pathLocations.isEmpty() || !pathLocations.containsKey(itemString)){
-                            Projected projected = new Projected();
-                            projected.setProjectLocation(i, j);
-                            pathLocations.put(itemString, projected);
-                        }else{
-                            //System.out.println(toStringLabels(item) + " " + i + " " + j);
-                            pathLocations.get(itemString).setProjectLocation(i,j);
-                        }
-
                     }
 
                 }
@@ -86,34 +134,19 @@ public class ItemsetMiner {
                 database.add(trans);
             }
 
-            //print path and its locations
-            for(Map.Entry<String,Projected> entry : pathLocations.entrySet()){
-                System.out.print(entry.getKey()+ " : ");
-                for(int i=0; i<entry.getValue().getProjectLocationSize(); ++i) {
-                    for (int j = 0; j < entry.getValue().getProjectLocation(i).length; ++j) {
-                        System.out.print(entry.getValue().getProjectLocation(i)[j]);
-                        if(j != entry.getValue().getProjectLocation(i).length-1)
-                            System.out.print(" ");
-                    }
-                    if (i != entry.getValue().getProjectLocationSize() - 1)
-                        System.out.print(" , ");
-                }
-                System.out.println();
-            }
-
-            out.write("#CONVERTED_FROM_TEXT\n");
-            //System.out.println("@CONVERTED_FROM_TEXT");
+            //write header information to file
+            //out.write("@CONVERTED_FROM_TEXT\n");
             for(int i=0; i< itemIndex.size(); ++i){
                 out.write("@ITEM"+uniChar+i+uniChar+toStringLabels(itemIndex.get(i))+"\n");
-                //System.out.println("@ITEM="+i+"="+itemIndex.get(i));
             }
-
+            //write transaction database to file
             for(List<Integer> list : database){
                 Collections.sort(list);
                 for(int i = 0; i< list.size(); ++i) {
-                    out.write(String.valueOf(list.get(i)) + " ");
+                    out.write(String.valueOf(list.get(i)));
+                    if(i != list.size()-1)
+                        out.write(" ");
                 }
-                //System.out.println(list);
                 out.write("\n");
             }
             //close file
@@ -136,8 +169,7 @@ public class ItemsetMiner {
         return stringLabels;
     }
 
-    //Read itemsets from output of itemset mining algorithm
-    //convert labels of itemsets from Integer to String.
+    //convert integer itemsets into String representation.
     private void printPattern(String inputPattern, Map<Integer,String> _indexLabels){
         try (BufferedReader br = new BufferedReader(new FileReader(inputPattern))) {
             String line;
@@ -165,15 +197,11 @@ public class ItemsetMiner {
             whiteLabels = database.readWhiteLabel(inputBlackLabel);
             transaction = database.readAST(new File(inputDir), whiteLabels, indexLabels);
 
-            String outputDir = "output";
-            if(Files.notExists(Paths.get(outputDir)))
-                Files.createDirectories(Paths.get(outputDir));
-
             String[] inputPaths = inputDir.split("/");
             String databaseName = inputPaths[inputPaths.length-1];
 
             String inputItemsetMining = databaseName + "_" + minsupp*100 + "_percent" + "_database.txt";
-            String outputItemsetMining = outputDir+"/"+databaseName +"_" + minsupp*100 + "_percent" + "_output.txt";
+            String outputItemsetMining = outputDir+"/"+databaseName +"_" + minsupp*100 + "_percent" + "_patterns.txt";
 
             //create itemset database
             System.out.print("creating itemset database ... ");
@@ -183,10 +211,10 @@ public class ItemsetMiner {
             startTime = System.currentTimeMillis();
 
             //using the FPMax algorithm: http://www.philippe-fournier-viger.com/spmf/FPMax.php
-            System.out.println("running itemset mining algorithm ... ");
+            System.out.print("running itemset mining algorithm ... ");
             AlgoFPMax algo = new AlgoFPMax();
             algo.runAlgorithm(inputItemsetMining, outputItemsetMining, minsupp, minsize);
-            algo.printStats();
+            //algo.printStats();
 
             //using Eclat algorithm to find FP : slow !
 //            System.out.println("running itemset mining algorithm ... ");
@@ -194,19 +222,27 @@ public class ItemsetMiner {
 //            algo.runAlgorithm(outputItemsetMining, transactionDatabase, minsupp, true);
 //            algo.printStats();
 
+              //using VMSP algorithm to find MFP: Slow
+//            System.out.println("running itemset mining algorithm ... "); //running very slowly
+//            String commandStr = "java -jar spmf.jar run VMSP "+inputItemsetMining+" "+ outputItemsetMining+" "+"15%";
+//            Process proc = Runtime.getRuntime().exec(commandStr);
+//            proc.waitFor();
 
+            System.out.println((System.currentTimeMillis()-startTime)/1000 +" s");
 
+            //run forestmatcher for itemsets
+            String outputMatching = outputDir+"/"+databaseName +"_" + minsupp*100 + "_percent" + "_matches.xml";
+            String commandStr = "java -jar forestmatcher.jar -pathmatching "+inputDir+" "+outputItemsetMining+" "+outputMatching;
+            Process proc = Runtime.getRuntime().exec(commandStr);
+            proc.waitFor();
 
             //delete temporary files: database.txt?
             Files.deleteIfExists(Paths.get(inputItemsetMining));
-
-            System.out.println((System.currentTimeMillis()-startTime)/1000 +" s");
+            System.out.println("Finish!");
 
         }catch (Exception e){
             System.out.println("error: runing itemset mining - "+e);
         }
-
-
     }
 
 }

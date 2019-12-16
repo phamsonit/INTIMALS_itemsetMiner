@@ -21,8 +21,6 @@ public class Config {
     }
 
 
-    public boolean getSequence(){return Boolean.valueOf(prop.getProperty("sequence"));}
-    public double getMinSup(){return Double.valueOf(prop.getProperty("minSup"));}
     public int getIterations(){
         return Integer.valueOf(prop.getProperty("iterations"));
     }

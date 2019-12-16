@@ -25,25 +25,39 @@
 
 package be.intimals.ItemsetMiner;
 
+import be.intimals.ItemsetMiner.config.Config;
 
 import java.io.*;
-
-
+import java.nio.file.Paths;
 import java.lang.String;
+import java.nio.file.Files;
 
 public class Main {
 
     static public void main(String[] args) throws IOException {
 
-
-        String inputDir = "/Users/user/Working/INTIMALS/softs-gitlab/freqt/input-ASTs/synthetic-data/4files";
-        //String inputDir = "/Users/user/Working/INTIMALS/softs-gitlab/freqt/input-ASTs/jhotdraw/jhotdraw-folds/fold4";
-        //String inputDir = "/Users/user/Working/INTIMALS/softs-gitlab/freqt/input-ASTs/checkstyle/checkstyle-original";
+        //#String inputDir = "/Users/user/Working/INTIMALS/softs-gitlab/tree-miner/input-ASTs/synthetic-data/4files";
+        String inputDir = "/Users/user/Working/INTIMALS/softs-gitlab/tree-miner/input-ASTs/jhotdraw/jhotdraw-original";
+        //String inputDir = "/Users/user/Working/INTIMALS/softs-gitlab/tree-miner/input-ASTs/jhotdraw/jhotdraw-folds/fold4";
+        //String inputDir = "/Users/user/Working/INTIMALS/softs-gitlab/tree-miner/input-ASTs/checkstyle/checkstyle-original";
+        String outputDir = "output1";
         String inputBlackLabel="conf/java/listWhiteLabel.txt";
-        double minsup = 0.3;
-        int minsize = 2;
+        double minsup = 0.015;
+        int minsize = 10;
 
-        ItemsetMiner miner = new ItemsetMiner(inputDir, inputBlackLabel, minsup, minsize);
+//        String configPathBasic = args[0];
+//        Config configBasic = new Config(configPathBasic);
+//
+//        String inputDir = configBasic.getInputFiles();
+//        String outputDir = configBasic.getOutputFile();
+//        String inputBlackLabel = configBasic.getWhiteLabelFile();
+//        double minsup = configBasic.getMinSup();
+//        int minsize = configBasic.getMinLeaf();
+
+        if(!Files.exists(Paths.get(outputDir)))
+            Files.createDirectory(Paths.get(outputDir));
+
+        ItemsetMiner miner = new ItemsetMiner(inputDir, outputDir, inputBlackLabel, minsup, minsize);
         miner.run();
     }
 
