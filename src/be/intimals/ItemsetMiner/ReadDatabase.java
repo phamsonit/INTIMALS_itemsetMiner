@@ -30,28 +30,6 @@ public class ReadDatabase {
     private List<String> labels = new LinkedList<>();
 
     //////////////////////////////
-
-    //read white labels from given file
-    public Map<String,Set<String> > readWhiteLabel(String path){
-        Map<String,Set<String> > _whiteLabels = new HashMap<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                if( ! line.isEmpty() && line.charAt(0) != '#' ) {
-                    String[] str_tmp = line.split(" ");
-                    String ASTNode = str_tmp[0];
-                    Set<String> children = new HashSet<>();
-                    for(int i=1; i<str_tmp.length; ++i){
-                        children.add(str_tmp[i]);
-                    }
-                    _whiteLabels.put(ASTNode,children);
-                }
-            }
-        }catch (IOException e) {System.out.println("Error: reading white list "+e);}
-        return _whiteLabels;
-    }
-
-
     //count number children of a node
     public int countNBChildren(Node node){
         int nbChildren = 0;
@@ -199,12 +177,14 @@ public class ReadDatabase {
             //for (File fi : files) {
             for (String fi : files) {
                 //format XML file before create tree
-                String inFileTemp = rootDirectory+"/temp.xml";
-                Files.deleteIfExists(Paths.get(inFileTemp));
-                formatter.format(fi,inFileTemp);
+                //String inFileTemp = rootDirectory+"/temp.xml";
+                //Files.deleteIfExists(Paths.get(inFileTemp));
+                //formatter.format(fi,inFileTemp);
+
+                //System.out.println(fi);
 
                 //create tree
-                File fXmlFile = new File(inFileTemp);
+                File fXmlFile = new File(fi);
                 DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
                 Document doc = dBuilder.parse(fXmlFile);
                 doc.getDocumentElement().normalize();
@@ -228,7 +208,7 @@ public class ReadDatabase {
                 //add tree to database
                 database.add(trans);
                 //delete temporary input file
-                Files.deleteIfExists(Paths.get(inFileTemp));
+                //Files.deleteIfExists(Paths.get(inFileTemp));
                 System.out.print(".");
             }
             System.out.println(" reading ended.");
@@ -242,13 +222,19 @@ public class ReadDatabase {
 
     //collect full name of files in the directory
     private void populateFileList(File directory, ArrayList<String> list){
-        File[] files = directory.listFiles((dir, name) -> name.toLowerCase().endsWith(".xml"));
-        ArrayList<String> fullNames = new ArrayList<>();
-        for(int i=0; i<files.length; ++i)
-            fullNames.add(files[i].getAbsolutePath());
-        list.addAll(fullNames);
-        File[] directories = directory.listFiles(File::isDirectory);
-        for (File dir : directories) populateFileList(dir,list);
+        try{
+            File[] files = directory.listFiles((dir, name) -> name.toLowerCase().endsWith(".xml"));
+            ArrayList<String> fullNames = new ArrayList<>();
+            for(int i=0; i<files.length; ++i)
+                fullNames.add(files[i].getAbsolutePath());
+            list.addAll(fullNames);
+            File[] directories = directory.listFiles(File::isDirectory);
+            for (File dir : directories) populateFileList(dir,list);
+
+        }catch (Exception e){
+            System.out.println("populate file error " + e);
+        }
+
     }
 
     public static void printTransaction(ArrayList < ArrayList<NodeFreqT> > trans){

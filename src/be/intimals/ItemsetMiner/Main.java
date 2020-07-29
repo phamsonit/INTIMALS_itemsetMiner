@@ -36,29 +36,29 @@ public class Main {
 
     static public void main(String[] args) throws IOException {
 
-        //#String inputDir = "/Users/user/Working/INTIMALS/softs-gitlab/tree-miner/input-ASTs/synthetic-data/4files";
-        String inputDir = "/Users/user/Working/INTIMALS/softs-gitlab/tree-miner/input-ASTs/jhotdraw/jhotdraw-original";
-        //String inputDir = "/Users/user/Working/INTIMALS/softs-gitlab/tree-miner/input-ASTs/jhotdraw/jhotdraw-folds/fold4";
-        //String inputDir = "/Users/user/Working/INTIMALS/softs-gitlab/tree-miner/input-ASTs/checkstyle/checkstyle-original";
-        String outputDir = "output1";
-        String inputBlackLabel="conf/java/listWhiteLabel.txt";
-        double minsup = 0.015;
-        int minsize = 10;
+        //algorithm:
+        //- ppicgap : frequential pattern mining with GAP constraint: ppict.2.0.0-assembly-0.1-SNAPSHOT
+        //- ppic    : frequential pattern mining
+        //- fpmax   : maximal frequent pattern mining by FPMax
+        //- elat    : frequent pattern mining by Eclat
+        //- krimp
+        String algorithm = "ppicgap";
 
-//        String configPathBasic = args[0];
-//        Config configBasic = new Config(configPathBasic);
-//
-//        String inputDir = configBasic.getInputFiles();
-//        String outputDir = configBasic.getOutputFile();
-//        String inputBlackLabel = configBasic.getWhiteLabelFile();
-//        double minsup = configBasic.getMinSup();
-//        int minsize = configBasic.getMinLeaf();
+        //String configPathBasic = "conf/synthetic/config.properties";
+        String configPathBasic = "conf/java/config.properties";
+        Config configBasic = new Config(configPathBasic);
 
-        if(!Files.exists(Paths.get(outputDir)))
-            Files.createDirectory(Paths.get(outputDir));
+        if(!Files.exists(Paths.get(configBasic.getOutputFile())))
+            Files.createDirectory(Paths.get(configBasic.getOutputFile()));
 
-        ItemsetMiner miner = new ItemsetMiner(inputDir, outputDir, inputBlackLabel, minsup, minsize);
-        miner.run();
+        ItemsetMiner miner = new ItemsetMiner(configBasic);
+        miner.run(algorithm);
+
+        //group ASTs by tids of itemset
+
+
+        //for each group run Freqt to discover subtrees
+
     }
 
 }

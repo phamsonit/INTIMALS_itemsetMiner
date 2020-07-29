@@ -21,6 +21,9 @@ public class Config {
     }
 
 
+    public double getMinSup(){return  Double.valueOf(prop.getProperty("minSup"));}
+    public int getMinPaths(){return Integer.valueOf(prop.getProperty("minPaths"));}
+
     public int getIterations(){
         return Integer.valueOf(prop.getProperty("iterations"));
     }
